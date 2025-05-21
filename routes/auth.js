@@ -56,7 +56,7 @@ router.post('/login', async (req, res) => {
   // Get all users (for testing)
   router.get('/users', async (req, res) => {
     try {
-      const result = await pool.query('SELECT id, email, username FROM users');
+      const result = await pool.query('SELECT id, email, username FROM users.');
       res.json(result.rows);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -87,6 +87,6 @@ router.post('/login', async (req, res) => {
 
 
 
-  
+
 
 module.exports = router;

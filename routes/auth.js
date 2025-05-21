@@ -63,31 +63,89 @@ router.post('/login', async (req, res) => {
     }
   });
 
-// Add Task Routes
-app.post('/tasks', async (req, res) => {
-  const { task_name, category, comment, from_date, to_date } = req.body;
+// Add Task Route
+router.post('/activity', async (req, res) => {
+  const { taskname, category, comment, fromdate, todate } = req.body;
 
-  if (!task_name || !category || !from_date || !to_date) {
-    return res.status(400).json({ message: 'Missing required fields' });
-  }
+  // Basic validation
+  // if (!task_name || !category || !from_date || !to_date) {
+  //   return res.status(400).json({ message: 'Missing required fields' });
+  // }
 
   try {
     const result = await pool.query(
-      `INSERT INTO tasks (task_name, category, comment, from_date, to_date)
+      `INSERT INTO activity (taskname, category, comment, fromdate, todate)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [task_name, category, comment, from_date, to_date]
+      [taskname, category, comment, fromdate, todate]
     );
-    res.status(201).json({ message: 'Task created successfully', task: result.rows[0] });
+    res.status(201).json({ message: 'Task created', task: result.rows[0] });
   } catch (err) {
     console.error('Error inserting task:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+
+// Update Task Route
+router.put('/activity', async (req, res) => {
+  const { id } = req.params;
+  const { taskname, category, comment, fromdate, todate } = req.body;
+
+  // Basic validation
+  // if (!taskname || !category || !fromdate || !todate) {
+  //   return res.status(400).json({ message: 'Missing required fields' });
+  // }
+
+  try {
+    const result = await pool.query(
+      `UPDATE activity
+       SET taskname = $1, category = $2, comment = $3, fromdate = $4, todate = $5
+       WHERE taskname = $1
+       RETURNING *`,
+      [taskname, category, comment, fromdate, todate]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    res.status(200).json({ message: 'Task updated', task: result.rows[0] });
+  } catch (err) {
+    console.error('Error updating task:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
+
+
+// Delete Task Route with existence check
+router.delete('/activity', async (req, res) => {
+  const { taskname } = req.params;
+
+  try {
+    // First, check if the task exists
+    const check = await pool.query(
+      `SELECT * FROM activity WHERE taskname = $1`,
+      [taskname]
+    );
+
+    if (check.rowCount === 0) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // If exists, delete it
+    const result = await pool.query(
+      `DELETE FROM activity WHERE taskname = $1 RETURNING *`,
+      [taskname]
+    );
+
+    res.status(200).json({ message: 'Task deleted successfully', task: result.rows[0] });
+  } catch (err) {
+    console.error('Error deleting task:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
 
 
 

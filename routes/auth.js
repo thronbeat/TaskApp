@@ -63,7 +63,31 @@ router.post('/login', async (req, res) => {
     }
   });
 
+// Add Task Routes
+app.post('/tasks', async (req, res) => {
+  const { task_name, category, comment, from_date, to_date } = req.body;
 
+  if (!task_name || !category || !from_date || !to_date) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO tasks (task_name, category, comment, from_date, to_date)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [task_name, category, comment, from_date, to_date]
+    );
+    res.status(201).json({ message: 'Task created successfully', task: result.rows[0] });
+  } catch (err) {
+    console.error('Error inserting task:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Start server
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
 
 
 
